@@ -82,27 +82,29 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .about .x:hover{background:var(--bx);color:#fff}
 .about .bbx{width:150px;display:block}
 .about .card{width:100%;max-width:280px;background:#fff;border-radius:18px;padding:20px 16px 16px;box-shadow:0 1px 0 rgba(11,11,15,.06),0 10px 30px -12px rgba(0,0,255,.25);display:flex;flex-direction:column;align-items:center;gap:6px}
-.about .pic{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:50% 30%;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--bx);margin-bottom:6px}
+.about .pic{width:96px;height:96px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--bx);margin-bottom:6px}
 .about .ttl{font-size:16px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
 .about .ver{font-size:10px;font-weight:700;color:#fff;background:var(--bx);border-radius:999px;padding:2px 7px;letter-spacing:.02em}
 .about .ver:empty{display:none}
 .about .sub{font-size:11px;color:#6B6B76;margin-bottom:6px}
-.about .lines{width:100%;border-top:1px solid #ECECF2;border-bottom:1px solid #ECECF2;padding:9px 0;display:grid;gap:3px}
+.about .lines{width:100%;border-top:1px solid #ECECF2;padding:10px 0 2px;display:grid;gap:3px}
 .about .lines p{font-size:12px;color:#33333B}
 .about .lines b{color:var(--bx)}
-.about .breath{margin-top:6px;font-size:12px;font-weight:700;color:#fff;background:var(--bx);border-radius:12px;padding:9px 12px;line-height:1.4;width:100%}
+.about .lines .breath{margin-top:6px;font-size:12px;color:#33333B;line-height:1.45;padding:0 6px}
+.about .lines b.cl{color:#D97757}
 .about .foot{font-size:10.5px;color:#7A7A85;letter-spacing:.02em}
 .about .foot b{color:var(--ink)}
 
 /* splash */
 .splash{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .45s;z-index:5}
 .splash.out{opacity:0;pointer-events:none}
-.splash .pic{width:150px;height:150px;border-radius:50%;object-fit:cover;object-position:50% 30%;box-shadow:0 0 0 3px var(--green);animation:pop .7s cubic-bezier(.2,.9,.2,1) both}
+.splash .pic{width:150px;height:150px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--green);animation:pop .7s cubic-bezier(.2,.9,.2,1) both}
 .sbrand{display:flex;align-items:center;gap:8px;animation:up .6s .15s cubic-bezier(.2,.9,.2,1) both}
 .sbrand .bm{width:24px;height:22px}.sbrand .lt{height:16px}
 .splash .bar{width:120px;height:3px;border-radius:3px;background:var(--line);overflow:hidden}
 .splash .bar i{display:block;height:100%;width:0;background:var(--green);animation:load 1.3s .2s ease-in-out forwards}
-.splash .sbbx{height:13px;opacity:.85;animation:up .6s .3s cubic-bezier(.2,.9,.2,1) both}
+.splash .sbbx{position:absolute;left:50%;bottom:28px;height:14px;transform:translateX(-50%);opacity:0;animation:fadein .6s .35s ease both}
+@keyframes fadein{to{opacity:1}}
 @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
 @keyframes up{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
 @keyframes load{to{width:100%}}
