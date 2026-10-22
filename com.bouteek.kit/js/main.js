@@ -141,7 +141,7 @@
 
     // ---------------------------------------------------------------- self update
     // Two sources for the same GitHub repo: raw.githubusercontent (works with VPN) and the jsDelivr
-    // mirror (works without VPN in Iran). Files of a version are read from its tag, e.g. v1.3.2.
+    // mirror (works without VPN in Iran). Files of a version are read from the commit named in version.json.
     var REPO = "alihydri10/bouteek-kit";
     var SOURCES = [
         { name: "GitHub", ver: "https://raw.githubusercontent.com/" + REPO + "/main/version.json",
@@ -201,7 +201,7 @@
         });
     }
     function fetchFile(path, done) {                    // try each source in turn
-        var tag = "v" + remote.version, k = 0, enc = path.split("/").map(encodeURIComponent).join("/");
+        var tag = remote.commit || "main", k = 0, enc = path.split("/").map(encodeURIComponent).join("/");
         (function tryNext(lastErr) {
             if (k >= srcOrder.length) { return done(lastErr || "download failed"); }
             var src = srcOrder[k++];
