@@ -1,0 +1,7 @@
+*.bat text eol=crlf
+*.command text eol=lf
+*.aep binary
+*.mogrt binary
+*.webm binary
+*.jpg binary
+*.png binary
