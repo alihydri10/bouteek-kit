@@ -139,23 +139,32 @@
     $("btnClose").addEventListener("click", function () { $("about").className = "about"; });
 
 
-    // ---------------------------------------------------------------- self update (files live on GitHub)
-    var RAW = "https://raw.githubusercontent.com/alihydri10/bouteek-kit/main/";
-    var localVer = "0.0.0", remote = null;
+    // ---------------------------------------------------------------- self update
+    // Two sources for the same GitHub repo: raw.githubusercontent (works with VPN) and the jsDelivr
+    // mirror (works without VPN in Iran). Files of a version are read from its tag, e.g. v1.3.2.
+    var REPO = "alihydri10/bouteek-kit";
+    var SOURCES = [
+        { name: "GitHub", ver: "https://raw.githubusercontent.com/" + REPO + "/main/version.json",
+          base: function (tag) { return "https://raw.githubusercontent.com/" + REPO + "/" + tag + "/com.bouteek.kit/"; } },
+        { name: "jsDelivr", ver: "https://cdn.jsdelivr.net/gh/" + REPO + "@main/version.json",
+          base: function (tag) { return "https://cdn.jsdelivr.net/gh/" + REPO + "@" + tag + "/com.bouteek.kit/"; } }
+    ];
+    var localVer = "0.0.0", remote = null, srcOrder = SOURCES.slice();
     function fsOK() { return !!(window.cep && window.cep.fs); }
     function newer(a, b) {                              // is a > b
         var x = String(a).split("."), y = String(b).split("."), i;
         for (i = 0; i < 3; i++) { var p = parseInt(x[i] || 0, 10), q = parseInt(y[i] || 0, 10); if (p !== q) { return p > q; } }
         return false;
     }
-    function get(url, binary, done) {
-        var x = new XMLHttpRequest();
+    function get(url, binary, ms, done) {
+        var x = new XMLHttpRequest(), fin = false;
+        function end(e, r) { if (!fin) { fin = true; done(e, r); } }
         x.open("GET", url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now(), true);
         if (binary) { x.responseType = "arraybuffer"; }
-        x.timeout = 60000;
-        x.onload = function () { if (x.status === 200) { done(null, x.response); } else { done("HTTP " + x.status + " " + url); } };
-        x.onerror = function () { done("No connection"); };
-        x.ontimeout = function () { done("Timed out"); };
+        x.timeout = ms;
+        x.onload = function () { if (x.status === 200) { end(null, x.response); } else { end("HTTP " + x.status); } };
+        x.onerror = function () { end("no connection"); };
+        x.ontimeout = function () { end("timed out"); };
         x.send();
     }
     function b64(buf) {
@@ -168,23 +177,40 @@
         for (i = 1; i < parts.length; i++) { cur += "/" + parts[i]; window.cep.fs.makedir(cur); }
     }
     function readLocalVersion() {
-        if (!fsOK()) { return; }
-        try {
-            var r = window.cep.fs.readFile(EXT + "/version.json");
-            if (r.err === 0) { localVer = JSON.parse(r.data).version || localVer; }
-        } catch (e) { }
-        $("ver").textContent = "Version " + localVer;
+        if (fsOK()) {
+            try { var r = window.cep.fs.readFile(EXT + "/version.json"); if (r.err === 0) { localVer = JSON.parse(r.data).version || localVer; } } catch (e) { }
+        }
+        $("ver").textContent = "v" + localVer;
     }
+    // ask both sources at once, keep the newest answer; the source that answered goes first for downloads
     function checkUpdate() {
         if (!fsOK()) { return; }
-        get(RAW + "version.json", false, function (err, txt) {
-            if (err) { return; }
-            try { remote = JSON.parse(txt); } catch (e) { return; }
-            if (remote && remote.version && newer(remote.version, localVer)) {
+        var left = SOURCES.length, best = null, bestSrc = null;
+        SOURCES.forEach(function (src) {
+            get(src.ver, false, 10000, function (err, txt) {
+                if (!err) {
+                    try { var v = JSON.parse(txt); if (v.version && (!best || newer(v.version, best.version))) { best = v; bestSrc = src; } } catch (e) { }
+                }
+                if (--left > 0) { return; }
+                if (!best || !newer(best.version, localVer)) { return; }
+                remote = best;
+                srcOrder = [bestSrc].concat(SOURCES.filter(function (s) { return s !== bestSrc; }));
                 $("updTxt").textContent = "New version " + remote.version + (remote.notes ? " · " + remote.notes : "");
                 $("upd").className = "upd on";
-            }
+            });
         });
+    }
+    function fetchFile(path, done) {                    // try each source in turn
+        var tag = "v" + remote.version, k = 0, enc = path.split("/").map(encodeURIComponent).join("/");
+        (function tryNext(lastErr) {
+            if (k >= srcOrder.length) { return done(lastErr || "download failed"); }
+            var src = srcOrder[k++];
+            get(src.base(tag) + enc, true, 90000, function (err, buf) {
+                if (err) { return tryNext(src.name + ": " + err); }
+                if (k > 1) { srcOrder = [src].concat(srcOrder.filter(function (s) { return s !== src; })); }
+                done(null, buf);
+            });
+        })();
     }
     function runUpdate() {
         if (!remote || !remote.files || !remote.files.length) { return; }
@@ -193,8 +219,8 @@
         function next() {
             if (i >= files.length) { return write(); }
             $("updTxt").textContent = "Downloading " + (i + 1) + " / " + files.length + "…";
-            get(RAW + "com.bouteek.kit/" + files[i].split("/").map(encodeURIComponent).join("/"), true, function (err, buf) {
-                if (err) { $("updTxt").textContent = "Update failed: " + err; $("btnUpd").disabled = false; return; }
+            fetchFile(files[i], function (err, buf) {
+                if (err) { $("updTxt").textContent = "Update failed (" + err + "). Try again."; $("btnUpd").disabled = false; return; }
                 got.push({ path: files[i], data: b64(buf) }); i++; next();
             });
         }
